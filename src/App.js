@@ -2,9 +2,10 @@ import React from 'react'
 import { BrowserRouter as Router } from 'react-router-dom'
 import { Switch, Route } from 'react-router'
 import { Toolbar } from './components'
+import Jumbotron from './components/Jumbotron';
 
 const Home = () => {
-  return <h1>Hey Again</h1>
+  return <Jumbotron />
 }
 
 const Migrations = () => {
