@@ -3,6 +3,7 @@ import { Jumbotron, Table } from "../components";
 import styled from "styled-components";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import { Typography, Button } from "@material-ui/core";
+import axios from "../utils/mock-fetch";
 
 const Wrapper = styled.div`
   padding: 5%;
@@ -16,19 +17,20 @@ const Feedback = styled.div`
   margin: 10px 0px;
 `;
 
-const renderFetchFeedback = () => (
+const renderFetchFeedback = (totalFacilities, showFacilitiesHandler) => (
   <Feedback>
     <Typography variant="button" color="primary">
-      Finished fetching 108 Facilities from MHFR since last sync
+      {`Finished fetching ${totalFacilities} Facilities from MHFR since last sync`}
     </Typography>
-    <Button>View Fetched Facilities</Button>
+    <Button onClick={showFacilitiesHandler}>View Fetched Facilities</Button>
   </Feedback>
 );
 
 export default class Index extends React.Component {
   state = {
     isFetchingFacilities: false,
-    facilities: ""
+    isShowingFetchedFacilities: false,
+    facilities: []
   };
 
   headings = [
@@ -47,13 +49,41 @@ export default class Index extends React.Component {
 
   clickHandler = async () => {
     this.setState({ isFetchingFacilities: true });
-    const facilities = await new Promise((res, rej) => {
-      setTimeout(() => {
-        res("something");
-      }, 2000);
+    const facilities = await axios.get("FACILITIES");
+    this.setState({
+      facilities: facilities.facilities,
+      isFetchingFacilities: false
     });
-    this.setState({ facilities, isFetchingFacilities: false });
   };
+
+  getTitle = () => {
+    return this.state.isShowingFetchedFacilities
+      ? "Fetched Facilities"
+      : "Previous Synchronizations";
+  };
+
+  getHeadings = () => {
+    const unwantedHeaders = ["OpenLMISCode", "RegulatoryStatus"];
+
+    const synchedHeaders =
+      this.state.facilities.length > 0
+        ? Object.keys(this.state.facilities[0])
+            .filter(header => !unwantedHeaders.includes(header))
+            .map(heading => {
+              return {
+                name: heading,
+                isNumeric: false
+              };
+            })
+        : [];
+
+    return this.state.isShowingFetchedFacilities
+      ? synchedHeaders
+      : this.headings;
+  };
+
+  showFacilitiesHandler = () =>
+    this.setState({ isShowingFetchedFacilities: true });
 
   render() {
     return (
@@ -64,11 +94,15 @@ export default class Index extends React.Component {
           buttonHandler={this.clickHandler}
         />
         {this.state.isFetchingFacilities && <LinearProgress className="mt-4" />}
-        {this.state.facilities && renderFetchFeedback()}
+        {this.state.facilities.length > 0 &&
+          renderFetchFeedback(
+            this.state.facilities.length,
+            this.showFacilitiesHandler
+          )}
         <Table
-          headings={this.headings}
-          values={this.values}
-          title="Previous Synchronizations"
+          headings={this.getHeadings()}
+          values={[]}
+          title={this.getTitle()}
         />
       </Wrapper>
     );

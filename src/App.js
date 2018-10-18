@@ -16,18 +16,17 @@ const Footer = () => {
 const theme = createMuiTheme();
 
 export default props => {
-  console.log(props);
   return (
     <MuiThemeProvider theme={theme}>
       <Router>
-        <div>
+        <React.Fragment>
           <Toolbar />
           <Switch>
             <Route exact path="/" component={Synchronizations} />
             <Route exact path="/migrations" component={Migrations} />
           </Switch>
           <Footer />
-        </div>
+        </React.Fragment>
       </Router>
     </MuiThemeProvider>
   );
