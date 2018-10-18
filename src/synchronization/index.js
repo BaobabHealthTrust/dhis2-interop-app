@@ -22,7 +22,7 @@ const renderFetchFeedback = (totalFacilities, showFacilitiesHandler) => (
     <Typography variant="button" color="primary">
       {`Finished fetching ${totalFacilities} Facilities from MHFR since last sync`}
     </Typography>
-    <Button onClick={showFacilitiesHandler}>View Fetched Facilities</Button>
+    <Button onClick={showFacilitiesHandler}>sync facilities</Button>
   </Feedback>
 );
 
@@ -52,7 +52,8 @@ export default class Index extends React.Component {
     const facilities = await axios.get("FACILITIES");
     this.setState({
       facilities: facilities.facilities,
-      isFetchingFacilities: false
+      isFetchingFacilities: false,
+      isShowingFetchedFacilities: true
     });
   };
 
@@ -62,8 +63,48 @@ export default class Index extends React.Component {
       : "Previous Synchronizations";
   };
 
+  statusName = statuses => {
+    if (statuses[0] == true) {
+      return "new facility";
+    } else {
+      return "old facility";
+    }
+  };
+
+  getValues = () => {
+    const synchedValues =
+      this.state.facilities.length > 0
+        ? this.state.facilities
+            .map(({ OpenLMISCode, RegulatoryStatus, ...filtered }) => filtered)
+            .map(facilityValues => Object.values(facilityValues))
+        : [];
+    if (synchedValues.length > 0) {
+      let newOrRemoved = [];
+      const values = synchedValues.map(synchedValue => {
+        const prevAndNewValues = synchedValue.slice(0, 9);
+        newOrRemoved.push(synchedValue.slice(9));
+        const data = prevAndNewValues.map(
+          prevAndNewValue =>
+            `Old: ${prevAndNewValue.previousValue || "not available"} \n New: ${
+              prevAndNewValue.newValue
+            }`
+        );
+        return data;
+      });
+      for (let counter = 0; counter < values.length; counter++) {
+        values[counter].push(this.statusName(newOrRemoved[counter]));
+      }
+      return this.state.isShowingFetchedFacilities ? values : this.values;
+    }
+    return this.values;
+  };
   getHeadings = () => {
-    const unwantedHeaders = ["OpenLMISCode", "RegulatoryStatus"];
+    const unwantedHeaders = [
+      "OpenLMISCode",
+      "RegulatoryStatus",
+      "isNew",
+      "isRemoved"
+    ];
 
     const synchedHeaders =
       this.state.facilities.length > 0
@@ -76,7 +117,8 @@ export default class Index extends React.Component {
               };
             })
         : [];
-
+    synchedHeaders.push({ name: "status", isNumeric: false });
+    console.log(synchedHeaders);
     return this.state.isShowingFetchedFacilities
       ? synchedHeaders
       : this.headings;
@@ -101,7 +143,7 @@ export default class Index extends React.Component {
           )}
         <Table
           headings={this.getHeadings()}
-          values={[]}
+          values={this.getValues()}
           title={this.getTitle()}
         />
       </Wrapper>
