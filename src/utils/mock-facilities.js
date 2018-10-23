@@ -7,7 +7,7 @@ const data = {
     {
       Name: {
         previousValue: null,
-        newValue: "Anabanda Health Centre"
+        newValue: "Aabanda Health Centre"
       },
       CommonName: {
         previousValue: null,
@@ -59,7 +59,7 @@ const data = {
       },
       CommonName: {
         previousValue: null,
-        newValue: "Anabanda"
+        newValue: "Akeshaz"
       },
       Code: {
         previousValue: null,
