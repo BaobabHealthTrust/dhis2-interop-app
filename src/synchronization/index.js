@@ -50,6 +50,22 @@ export default class Index extends React.Component {
     ["dsfadjf34214", 7, 1, 100, "August 10, 2018"]
   ];
 
+  async componentDidMount() {
+    console.clear();
+    const res = await fetch(
+      `https://192.168.2.23:5000/interop-manager/synchronizations`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${btoa("malu:malu")}`
+        }
+      }
+    );
+    console.clear();
+    console.log(res.json());
+  }
+
   clickHandler = async () => {
     this.setState({ isFetchingFacilities: true });
     const facilities = await _axios.get("FACILITIES");
@@ -183,7 +199,7 @@ export default class Index extends React.Component {
       facility => !(facility.isNew && facility.isRemoved)
     );
     if (updatedFacilities.length > 0) {
-      const dhis2CompatFacilities = newFacilities.map(newFacility => ({
+      const dhis2CompatFacilities = updatedFacilities.map(newFacility => ({
         name: newFacility.Name.newValue,
         shortName: newFacility.CommonName.newValue,
         openingDate: newFacility.DateOpened.newValue,
