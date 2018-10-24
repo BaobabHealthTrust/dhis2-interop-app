@@ -4,6 +4,7 @@ import styled from "styled-components";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import { Typography, Button } from "@material-ui/core";
 import _axios from "../utils/mock-fetch";
+import base64 from "base-64";
 import axios from "axios";
 
 const Wrapper = styled.div`
@@ -51,19 +52,31 @@ export default class Index extends React.Component {
   ];
 
   async componentDidMount() {
+    // axios({
+    //   url: "http://142.93.203.254:5001/interop/changedFacilities",
+    //   method: "get",
+    //   auth: {
+    //     username: "mhfr",
+    //     password: "mhfr"
+    //   }
+    // }).then(d => console.log(d));
     console.clear();
+    const headers = new Headers();
+    headers.append(
+      "Authorization",
+      "Basic " + Buffer.from("mhfr" + ":" + "mhfr").toString("base64")
+    );
+    headers.append("Content-Type", "application/json");
     const res = await fetch(
-      `https://192.168.2.23:5000/interop-manager/synchronizations`,
+      `http://142.93.203.254:5001/interop-manager/changedfacilities`,
       {
         method: "GET",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Basic ${btoa("malu:malu")}`
+          Authorization: `Basic ${btoa("mhfr:mhfr")}`
         }
       }
     );
-    console.clear();
-    console.log(res.json());
+    console.log(await res.json());
   }
 
   clickHandler = async () => {
@@ -103,15 +116,15 @@ export default class Index extends React.Component {
         const prevAndNewValues = synchedValue.slice(0, 9);
         newOrRemoved.push(synchedValue.slice(9));
         const data = prevAndNewValues.map(prevAndNewValue => (
-          <span>
+          <div>
             <span style={{ color: "#4CAF50" }}>
-              ++ {prevAndNewValue.previousValue || "not available"}
+              +{prevAndNewValue.previousValue || "not available"}
             </span>{" "}
             <br />
             <span style={{ color: "#F44336" }}>
-              -- {prevAndNewValue.newValue || "not available"}
+              -{prevAndNewValue.newValue || "not available"}
             </span>
-          </span>
+          </div>
         ));
         return data;
       });
