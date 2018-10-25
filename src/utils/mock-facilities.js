@@ -49,7 +49,7 @@ const data = {
         previousValue: "",
         newValue: "Central"
       },
-      isNew: true,
+      isNew: false,
       isRemoved: false
     },
     {

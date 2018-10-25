@@ -4,8 +4,6 @@ import styled from "styled-components";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import { Typography, Button } from "@material-ui/core";
 import _axios from "../utils/mock-fetch";
-import axios from "axios";
-
 const Wrapper = styled.div`
   padding: 5%;
 `;
@@ -51,19 +49,36 @@ export default class Index extends React.Component {
   ];
 
   async componentDidMount() {
-    console.clear();
+    // const headers = new Headers({
+    //   "Content-Type": "application/json",
+    //   Authorization: `Basic ${btoa("malu:malu")}`
+    // });
     const res = await fetch(
-      `https://192.168.2.23:5000/interop-manager/synchronizations`,
+      "https://192.168.2.23:5000/interop-manager/synchronizations",
       {
-        method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Basic ${btoa("malu:malu")}`
         }
+        // credentials: "include"
       }
     );
-    console.clear();
-    console.log(res.json());
+
+    console.log(await res);
+    // const init = {
+    //   method: "GET",
+    //   headers,
+    //   cache: "default",
+    //   mode: "no-cors",
+    //   // credentials: "same-origin",
+    //   referrer: "client"
+    // };
+
+    // const url = "http://192.168.2.23:5001/interop-manager/synchronizations";
+    // // const req = new Request(url, init);
+
+    // const res = await fetch(url, init);
+    // await console.log("malu", await res.json());
   }
 
   clickHandler = async () => {
@@ -83,7 +98,7 @@ export default class Index extends React.Component {
   };
 
   statusName = statuses => {
-    if (statuses[0] == true) {
+    if (statuses[0] === true) {
       return "new facility";
     } else {
       return "old facility";
@@ -208,38 +223,42 @@ export default class Index extends React.Component {
         }
       }));
       for (let dhis2CompatFacility of dhis2CompatFacilities) {
-        const getParentId = await fetch(
-          `http://192.168.2.252:7000/training/api/organisationUnits.json?filter=name:ilike:${
-            dhis2CompatFacility.parent.name
-          }&fields=[id]`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Basic ${btoa(":/")}`
-            }
-          }
-        );
-        const data = await getParentId.json();
-        dhis2CompatFacility.parent.id = data.organisationUnits[0].id;
+        // const getParentId = await fetch(
+        //   `http://192.168.2.252:7000/training/api/organisationUnits.json?filter=name:ilike:${
+        //     dhis2CompatFacility.parent.name
+        //   }&fields=[id]`,
+        //   {
+        //     method: "GET",
+        //     headers: {
+        //       "Content-Type": "application/json",
+        //       Authorization: `Basic ${btoa(":")}`
+        //     }
+        //   }
+        // );
+        // const data = await getParentId.json();
+        // dhis2CompatFacility.parent.id = data.organisationUnits[0].id;
         const getFacilityId = await fetch(
-          `http://192.168.2.252:7000/training/api/organisationUnits.json?filter=name:ilike:${
-            dhis2CompatFacility.parent.name
+          `http://192.168.2.252:7000/training/api/organisationUnits.json?filter=shortName:ilike:${
+            dhis2CompatFacility.shortName
           }&fields=[id]`,
           {
             method: "GET",
+            // body: JSON.stringify(dhis2CompatFacility),
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Basic ${btoa(":/")}`
+              Authorization: `Basic ${btoa("admin1:Scriptado9!")}`
             }
           }
         );
+        const orgUnitId = await getFacilityId.json();
+        console.log(orgUnitId);
       }
     }
   };
 
   syncFacilitiesHandler = async () => {
-    await this.addToDHIS2();
+    // await this.addToDHIS2();
+    await this.updateFacility();
   };
 
   render() {
