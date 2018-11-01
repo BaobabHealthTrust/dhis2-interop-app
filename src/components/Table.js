@@ -5,6 +5,8 @@ import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
 import TableHead from "@material-ui/core/TableHead";
 import TableRow from "@material-ui/core/TableRow";
+import TablePagination from "@material-ui/core/TablePagination";
+import TableFooter from "@material-ui/core/TableFooter";
 import Paper from "@material-ui/core/Paper";
 import { lighten } from "@material-ui/core/styles/colorManipulator";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -61,7 +63,15 @@ const styles = theme => ({
   }
 });
 
-const DataTable = ({ classes, title, headings, values }) => {
+const DataTable = ({
+  classes,
+  title,
+  headings,
+  values,
+  handleChangePage,
+  page,
+  rowsPerPage
+}) => {
   return (
     <Paper className={classes.root}>
       <EnhancedTableToolbar title={title} />
@@ -86,6 +96,14 @@ const DataTable = ({ classes, title, headings, values }) => {
             );
           })}
         </TableBody>
+        <TableFooter>
+          <TablePagination
+            count={values.length}
+            onChangePage={handleChangePage}
+            page={page}
+            rowsPerPage={rowsPerPage}
+          />
+        </TableFooter>
       </Table>
     </Paper>
   );

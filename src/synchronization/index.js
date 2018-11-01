@@ -3,7 +3,9 @@ import { Jumbotron, Table } from "../components";
 import styled from "styled-components";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import { Typography, Button } from "@material-ui/core";
-import _axios from "../utils/mock-fetch";
+import axios from "axios";
+import Synchronization from "./utils/synchronization";
+
 const Wrapper = styled.div`
   padding: 5%;
 `;
@@ -19,11 +21,12 @@ const Feedback = styled.div`
 const renderFetchFeedback = (totalFacilities, syncFacilitiesHandler) => (
   <Feedback>
     <Typography variant="button" color="primary">
-      {`Finished fetching ${totalFacilities} Facilities from MHFR since last sync`}
-    </Typography>
+      {" "}
+      {`Finished fetching ${totalFacilities} Facilities from MHFR since last sync`}{" "}
+    </Typography>{" "}
     <Button color="primary" onClick={syncFacilitiesHandler}>
-      sync facilities
-    </Button>
+      sync facilities{" "}
+    </Button>{" "}
   </Feedback>
 );
 
@@ -35,11 +38,26 @@ export default class Index extends React.Component {
   };
 
   headings = [
-    { name: "Synchronization ID", isNumeric: false },
-    { name: "Added Facilities", isNumeric: true },
-    { name: "Removed Facilities", isNumeric: true },
-    { name: "Updated Facilities", isNumeric: true },
-    { name: "Sync Date", isNumeric: false }
+    {
+      name: "Synchronization ID",
+      isNumeric: false
+    },
+    {
+      name: "Added Facilities",
+      isNumeric: true
+    },
+    {
+      name: "Removed Facilities",
+      isNumeric: true
+    },
+    {
+      name: "Updated Facilities",
+      isNumeric: true
+    },
+    {
+      name: "Sync Date",
+      isNumeric: false
+    }
   ];
 
   values = [
@@ -48,44 +66,14 @@ export default class Index extends React.Component {
     ["dsfadjf34214", 7, 1, 100, "August 10, 2018"]
   ];
 
-  async componentDidMount() {
-    // const headers = new Headers({
-    //   "Content-Type": "application/json",
-    //   Authorization: `Basic ${btoa("malu:malu")}`
-    // });
-    const res = await fetch(
-      "https://192.168.2.23:5000/interop-manager/synchronizations",
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Basic ${btoa("malu:malu")}`
-        }
-        // credentials: "include"
-      }
-    );
-
-    console.log(await res);
-    // const init = {
-    //   method: "GET",
-    //   headers,
-    //   cache: "default",
-    //   mode: "no-cors",
-    //   // credentials: "same-origin",
-    //   referrer: "client"
-    // };
-
-    // const url = "http://192.168.2.23:5001/interop-manager/synchronizations";
-    // // const req = new Request(url, init);
-
-    // const res = await fetch(url, init);
-    // await console.log("malu", await res.json());
-  }
-
   clickHandler = async () => {
     this.setState({ isFetchingFacilities: true });
-    const facilities = await _axios.get("FACILITIES");
+
+    const sync = new Synchronization();
+    await sync.fetchFacilities();
+
     this.setState({
-      facilities: facilities.facilities,
+      facilities: sync.facilities,
       isFetchingFacilities: false,
       isShowingFetchedFacilities: true
     });
@@ -119,13 +107,23 @@ export default class Index extends React.Component {
         newOrRemoved.push(synchedValue.slice(9));
         const data = prevAndNewValues.map(prevAndNewValue => (
           <span>
-            <span style={{ color: "#4CAF50" }}>
-              ++ {prevAndNewValue.previousValue || "not available"}
+            <span
+              style={{
+                color: "#F44336"
+              }}
+            >
+              ++
+              {prevAndNewValue.previousValue || "not available"}{" "}
             </span>{" "}
             <br />
-            <span style={{ color: "#F44336" }}>
-              -- {prevAndNewValue.newValue || "not available"}
-            </span>
+            <span
+              style={{
+                color: "#4CAF50"
+              }}
+            >
+              --
+              {prevAndNewValue.newValue || "not available"}{" "}
+            </span>{" "}
           </span>
         ));
         return data;
@@ -156,7 +154,10 @@ export default class Index extends React.Component {
               };
             })
         : [];
-    synchedHeaders.push({ name: "status", isNumeric: false });
+    synchedHeaders.push({
+      name: "status",
+      isNumeric: false
+    });
     console.log(synchedHeaders);
     return this.state.isShowingFetchedFacilities
       ? synchedHeaders
@@ -210,50 +211,8 @@ export default class Index extends React.Component {
     }
   };
   updateFacility = async () => {
-    const updatedFacilities = this.state.facilities.filter(
-      facility => !(facility.isNew && facility.isRemoved)
-    );
-    if (updatedFacilities.length > 0) {
-      const dhis2CompatFacilities = updatedFacilities.map(newFacility => ({
-        name: newFacility.Name.newValue,
-        shortName: newFacility.CommonName.newValue,
-        openingDate: newFacility.DateOpened.newValue,
-        parent: {
-          name: newFacility.District.newValue + "-DHO"
-        }
-      }));
-      for (let dhis2CompatFacility of dhis2CompatFacilities) {
-        // const getParentId = await fetch(
-        //   `http://192.168.2.252:7000/training/api/organisationUnits.json?filter=name:ilike:${
-        //     dhis2CompatFacility.parent.name
-        //   }&fields=[id]`,
-        //   {
-        //     method: "GET",
-        //     headers: {
-        //       "Content-Type": "application/json",
-        //       Authorization: `Basic ${btoa(":")}`
-        //     }
-        //   }
-        // );
-        // const data = await getParentId.json();
-        // dhis2CompatFacility.parent.id = data.organisationUnits[0].id;
-        const getFacilityId = await fetch(
-          `http://192.168.2.252:7000/training/api/organisationUnits.json?filter=shortName:ilike:${
-            dhis2CompatFacility.shortName
-          }&fields=[id]`,
-          {
-            method: "GET",
-            // body: JSON.stringify(dhis2CompatFacility),
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Basic ${btoa("admin1:Scriptado9!")}`
-            }
-          }
-        );
-        const orgUnitId = await getFacilityId.json();
-        console.log(orgUnitId);
-      }
-    }
+    const sync = new Synchronization();
+    await sync.updateFacility(this.state.facilities);
   };
 
   syncFacilitiesHandler = async () => {
@@ -268,18 +227,18 @@ export default class Index extends React.Component {
           isFetching={this.state.isFetchingFacilities}
           buttonTitle="Fetch Facilities from MHFR"
           buttonHandler={this.clickHandler}
-        />
-        {this.state.isFetchingFacilities && <LinearProgress className="mt-4" />}
+        />{" "}
+        {this.state.isFetchingFacilities && <LinearProgress className="mt-4" />}{" "}
         {this.state.facilities.length > 0 &&
           renderFetchFeedback(
             this.state.facilities.length,
             this.syncFacilitiesHandler
-          )}
+          )}{" "}
         <Table
           headings={this.getHeadings()}
           values={this.getValues()}
           title={this.getTitle()}
-        />
+        />{" "}
       </Wrapper>
     );
   }
