@@ -70,7 +70,7 @@ export default class Index extends React.Component {
         password: "mhfr"
       }
     });
-    this.setState({
+    await this.setState({
       facilities: response.data,
       isFetchingFacilities: false,
       isShowingFetchedFacilities: true
@@ -83,88 +83,49 @@ export default class Index extends React.Component {
       : "Previous Synchronizations";
   };
 
-  statusName = statuses => {
-    if (statuses[0] == true) {
-      return "new facility";
-    } else {
-      return "old facility";
+  facilityStatus = facility => {
+    if (facility.isNew) {
+      return <span>new facility</span>;
+    } else if (facility.isRemoved) {
+      return <span>removed</span>;
     }
+    return <span style={{ color: "#ffae22" }}>updated facility</span>;
   };
 
   getValues = () => {
-    // console.log(this.state.facilities);
     const facilities = this.state.facilities;
     if (facilities.length > 0) {
       const data = [];
       facilities.forEach(facility => {
         const facilityData = {};
         Object.keys(facility).forEach(key => {
-          facilityData[key] = (
-            <span style={{ fontSize: "80%" }}>
-              <span style={{ color: "#4CAF50" }}>
-                ++
-                {facility[key].newValue || "not available"}
+          if (key == "isRecent" || key == "isRemoved") {
+            facilityData["status"] = this.facilityStatus(facility);
+          } else {
+            facilityData[key] = (
+              <span style={{ fontSize: "90%" }}>
+                <span style={{ color: "#4CAF50" }}>
+                  + {facility[key].newValue || "not available"}
+                </span>
+                <br />
+                <span style={{ color: "#F44336" }}>
+                  - {facility[key].previousValue || "not available"}
+                </span>
               </span>
-              <br />
-              <span style={{ color: "#F44336" }}>
-                --
-                {facility[key].previousValue || "not available"}
-              </span>
-            </span>
-          );
+            );
+          }
         });
         data.push(facilityData);
       });
-      console.log(data);
       return data;
     }
-    // const facilities = this.state.facilities;
-    // if (facilities.length > 0) {
-    //   return [];
-    // }
-    // const synchedValues =
-    //   this.state.facilities.length > 0
-    //     ? this.state.facilities
-    //         .map(({ OpenLMISCode, RegulatoryStatus, ...filtered }) => filtered)
-    //         .map(facilityValues => Object.values(facilityValues))
-    //     : [];
-    // const synchedValues =
-    //   this.state.facilities.length > 0
-    //     ? this.state.facilities
-    //         .map(({ OpenLMISCode, RegulatoryStatus, ...filtered }) => filtered)
-    //         .map(facilityValues => Object.values(facilityValues))
-    //     : [];
-    // if (synchedValues.length > 0) {
-    //   let newOrRemoved = [];
-    //   const values = synchedValues.map(synchedValue => {
-    //     const prevAndNewValues = synchedValue.slice(0, 9);
-    //     newOrRemoved.push(synchedValue.slice(9));
-    //     const data = prevAndNewValues.map(prevAndNewValue => (
-    //       <div>
-    //         <span style={{ color: "#4CAF50" }}>
-    //           -{prevAndNewValue.newValue || "not available"}
-    //         </span>
-    //         <br />
-    //         <span style={{ color: "#F44336" }}>
-    //           +{prevAndNewValue.previousValue || "not available"}
-    //         </span>
-    //       </div>
-    //     ));
-    //     return data;
-    //   });
-    //   for (let counter = 0; counter < values.length; counter++) {
-    //     values[counter].push(this.statusName(newOrRemoved[counter]));
-    //   }
-    //   return this.state.isShowingFetchedFacilities ? values : this.values;
-    // }
-    // return this.values;
     return [];
   };
   getHeadings = () => {
     const unwantedHeaders = [
       "OpenLMISCode",
       "RegulatoryStatus",
-      "isNew",
+      "isRecent",
       "isRemoved"
     ];
 
@@ -277,7 +238,8 @@ export default class Index extends React.Component {
   };
 
   syncFacilitiesHandler = async () => {
-    await this.addToDHIS2();
+    // await this.addToDHIS2();
+    console.log(this.state.facilities);
   };
 
   render() {
