@@ -1,15 +1,12 @@
 export default async () => {
-  const res = await fetch(
-    `https://192.168.2.23:5000/interop-manager/synchronizations`,
+  return [
     {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Basic ${btoa("malu:malu")}`
-      }
+      synchronizationId: "bdbdb",
+      totalFacilitiesAdded: "23",
+      totalFacilitiesRemoved: "0",
+      totalFacilitiesUpdated: "1",
+      synchronizationDate: "Date",
+      clientId: "string"
     }
-  );
-
-  const data = await res.json();
-  return data;
+  ];
 };

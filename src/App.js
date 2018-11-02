@@ -26,7 +26,7 @@ export default props => {
             <Route exact path="/" component={Synchronizations} />
             <Route exact path="/migrations" component={Migrations} />
           </Switch>
-          <Footer />
+          {/* <Footer /> */}
         </React.Fragment>
       </Router>
     </MuiThemeProvider>

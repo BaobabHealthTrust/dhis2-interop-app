@@ -1,11 +1,10 @@
 import React from "react";
-import { Jumbotron, Table } from "../components";
-import styled from "styled-components";
+import { Jumbotron, Table, Grid } from "../components";
+import styled, { consolidateStreamedStyles } from "styled-components";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import { Typography, Button } from "@material-ui/core";
-import _axios from "../utils/mock-fetch";
-import base64 from "base-64";
 import axios from "axios";
+import mockSyncs from "../utils/mock-syncs";
 
 const Wrapper = styled.div`
   padding: 5%;
@@ -34,7 +33,8 @@ export default class Index extends React.Component {
   state = {
     isFetchingFacilities: false,
     isShowingFetchedFacilities: false,
-    facilities: []
+    facilities: [],
+    synchronizations: []
   };
 
   headings = [
@@ -52,38 +52,26 @@ export default class Index extends React.Component {
   ];
 
   async componentDidMount() {
-    // axios({
-    //   url: "http://142.93.203.254:5001/interop/changedFacilities",
-    //   method: "get",
-    //   auth: {
-    //     username: "mhfr",
-    //     password: "mhfr"
-    //   }
-    // }).then(d => console.log(d));
     console.clear();
-    const headers = new Headers();
-    headers.append(
-      "Authorization",
-      "Basic " + Buffer.from("mhfr" + ":" + "mhfr").toString("base64")
-    );
-    headers.append("Content-Type", "application/json");
-    const res = await fetch(
-      `http://142.93.203.254:5001/interop-manager/changedfacilities`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Basic ${btoa("mhfr:mhfr")}`
-        }
-      }
-    );
-    console.log(await res.json());
+    const syncs = await mockSyncs();
+    console.log(syncs);
+    this.setState({
+      synchronizations: syncs
+    });
   }
 
   clickHandler = async () => {
     this.setState({ isFetchingFacilities: true });
-    const facilities = await _axios.get("FACILITIES");
+    const response = await axios({
+      url: "http://142.93.203.254:5001/interop-manager/changedFacilities",
+      method: "get",
+      auth: {
+        username: "mhfr",
+        password: "mhfr"
+      }
+    });
     this.setState({
-      facilities: facilities.facilities,
+      facilities: response.data,
       isFetchingFacilities: false,
       isShowingFetchedFacilities: true
     });
@@ -104,36 +92,73 @@ export default class Index extends React.Component {
   };
 
   getValues = () => {
-    const synchedValues =
-      this.state.facilities.length > 0
-        ? this.state.facilities
-            .map(({ OpenLMISCode, RegulatoryStatus, ...filtered }) => filtered)
-            .map(facilityValues => Object.values(facilityValues))
-        : [];
-    if (synchedValues.length > 0) {
-      let newOrRemoved = [];
-      const values = synchedValues.map(synchedValue => {
-        const prevAndNewValues = synchedValue.slice(0, 9);
-        newOrRemoved.push(synchedValue.slice(9));
-        const data = prevAndNewValues.map(prevAndNewValue => (
-          <div>
-            <span style={{ color: "#4CAF50" }}>
-              +{prevAndNewValue.previousValue || "not available"}
-            </span>{" "}
-            <br />
-            <span style={{ color: "#F44336" }}>
-              -{prevAndNewValue.newValue || "not available"}
+    // console.log(this.state.facilities);
+    const facilities = this.state.facilities;
+    if (facilities.length > 0) {
+      const data = [];
+      facilities.forEach(facility => {
+        const facilityData = {};
+        Object.keys(facility).forEach(key => {
+          facilityData[key] = (
+            <span style={{ fontSize: "80%" }}>
+              <span style={{ color: "#4CAF50" }}>
+                ++
+                {facility[key].newValue || "not available"}
+              </span>
+              <br />
+              <span style={{ color: "#F44336" }}>
+                --
+                {facility[key].previousValue || "not available"}
+              </span>
             </span>
-          </div>
-        ));
-        return data;
+          );
+        });
+        data.push(facilityData);
       });
-      for (let counter = 0; counter < values.length; counter++) {
-        values[counter].push(this.statusName(newOrRemoved[counter]));
-      }
-      return this.state.isShowingFetchedFacilities ? values : this.values;
+      console.log(data);
+      return data;
     }
-    return this.values;
+    // const facilities = this.state.facilities;
+    // if (facilities.length > 0) {
+    //   return [];
+    // }
+    // const synchedValues =
+    //   this.state.facilities.length > 0
+    //     ? this.state.facilities
+    //         .map(({ OpenLMISCode, RegulatoryStatus, ...filtered }) => filtered)
+    //         .map(facilityValues => Object.values(facilityValues))
+    //     : [];
+    // const synchedValues =
+    //   this.state.facilities.length > 0
+    //     ? this.state.facilities
+    //         .map(({ OpenLMISCode, RegulatoryStatus, ...filtered }) => filtered)
+    //         .map(facilityValues => Object.values(facilityValues))
+    //     : [];
+    // if (synchedValues.length > 0) {
+    //   let newOrRemoved = [];
+    //   const values = synchedValues.map(synchedValue => {
+    //     const prevAndNewValues = synchedValue.slice(0, 9);
+    //     newOrRemoved.push(synchedValue.slice(9));
+    //     const data = prevAndNewValues.map(prevAndNewValue => (
+    //       <div>
+    //         <span style={{ color: "#4CAF50" }}>
+    //           -{prevAndNewValue.newValue || "not available"}
+    //         </span>
+    //         <br />
+    //         <span style={{ color: "#F44336" }}>
+    //           +{prevAndNewValue.previousValue || "not available"}
+    //         </span>
+    //       </div>
+    //     ));
+    //     return data;
+    //   });
+    //   for (let counter = 0; counter < values.length; counter++) {
+    //     values[counter].push(this.statusName(newOrRemoved[counter]));
+    //   }
+    //   return this.state.isShowingFetchedFacilities ? values : this.values;
+    // }
+    // return this.values;
+    return [];
   };
   getHeadings = () => {
     const unwantedHeaders = [
@@ -150,11 +175,11 @@ export default class Index extends React.Component {
             .map(heading => {
               return {
                 name: heading,
-                isNumeric: false
+                title: heading
               };
             })
         : [];
-    synchedHeaders.push({ name: "status", isNumeric: false });
+    synchedHeaders.push({ name: "status", title: "status" });
     console.log(synchedHeaders);
     return this.state.isShowingFetchedFacilities
       ? synchedHeaders
@@ -269,11 +294,12 @@ export default class Index extends React.Component {
             this.state.facilities.length,
             this.syncFacilitiesHandler
           )}
-        <Table
+        <Grid columns={this.getHeadings()} rows={this.getValues()} />
+        {/* <Table
           headings={this.getHeadings()}
           values={this.getValues()}
           title={this.getTitle()}
-        />
+        /> */}
       </Wrapper>
     );
   }
