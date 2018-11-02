@@ -32,13 +32,15 @@ const renderFetchFeedback = (totalFacilities, syncFacilitiesHandler) => (
 export default class Index extends React.Component {
   state = {
     isFetchingFacilities: false,
+    isFetchingSynchronizations: false,
     isShowingFetchedFacilities: false,
     facilities: [],
-    synchronizations: []
+    synchronizations: [],
+    emptyStateText: ""
   };
 
   headings = [
-    { name: "synchronizationId", title: "Synchronization ID" },
+    { name: "_id", title: "Synchronization ID" },
     { name: "totalFacilitiesAdded", title: "Added Facilities" },
     { name: "totalFacilitiesRemoved", title: "Removed Facilities" },
     { name: "totalFacilitiesUpdated", title: "Updated Facilities" },
@@ -47,6 +49,7 @@ export default class Index extends React.Component {
 
   async componentDidMount() {
     console.clear();
+    this.setState({ isFetchingSynchronizations: true });
     const response = await axios.get(
       "http://142.93.203.254:5001/interop-manager/synchronizations",
       {
@@ -56,8 +59,21 @@ export default class Index extends React.Component {
         }
       }
     );
-    this.setState({ synchronizations: response.data });
+    console.log(response.data);
+    this.setState({
+      synchronizations: response.data,
+      isFetchingSynchronizations: false
+    });
   }
+
+  getEmptyStateText = () => {
+    if (this.state.isFetchingSynchronizations) {
+      return "Fetching Synchronizations...";
+    } else if (this.state.isFetchingFacilities) {
+      return "Fetching Facilities...";
+    }
+    return "No Data";
+  };
 
   clickHandler = async () => {
     this.setState({ isFetchingFacilities: true });
@@ -136,10 +152,12 @@ export default class Index extends React.Component {
               return { name: heading, title: heading };
             })
         : [];
-    synchedHeaders.push({
-      name: "status",
-      title: "status"
-    });
+    if (this.state.facilities.length > 0) {
+      synchedHeaders.push({
+        name: "status",
+        title: "status"
+      });
+    }
     return this.state.isShowingFetchedFacilities
       ? synchedHeaders
       : this.headings;
@@ -254,7 +272,11 @@ export default class Index extends React.Component {
             this.state.facilities.length,
             this.syncFacilitiesHandler
           )}
-        <Grid columns={this.getHeadings()} rows={this.getValues()} />
+        <Grid
+          columns={this.getHeadings()}
+          rows={this.getValues()}
+          emptyStateText={this.getEmptyStateText()}
+        />
         {/* <Table
           headings={this.getHeadings()}
           values={this.getValues()}

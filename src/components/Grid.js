@@ -39,26 +39,31 @@ class TableGrid extends React.Component {
       <React.Fragment>
         <Card style={{ marginTop: "20px", padding: "0" }}>
           <CardContent>
-            <Title className="hide-on-small-only">{this.props.title}</Title>
-            <Grid
-              rows={this.props.rows}
-              columns={this.props.columns}
-              style={{ margin: 0 }}
-            >
-              <SortingState defaultSorting={this.props.defaultSorting} />
-              <IntegratedSorting />
-              <PagingState
-                defaultCurrentPage={0}
-                pageSize={this.props.pageSize}
-              />
-              <IntegratedPaging />
-              <FilteringState defaultFilters={[]} />
-              <IntegratedFiltering />
-              <Table rowComponent={TableRow} />
-              <TableHeaderRow showSortingControls />
-              <Toolbar />
-              <PagingPanel />
-            </Grid>
+            {(this.props.rows.length > 0 && (
+              <Grid
+                rows={this.props.rows}
+                columns={this.props.columns}
+                style={{ margin: 0 }}
+              >
+                <SortingState defaultSorting={this.props.defaultSorting} />
+                <IntegratedSorting />
+                <PagingState
+                  defaultCurrentPage={0}
+                  pageSize={this.props.pageSize}
+                />
+                <IntegratedPaging />
+                <FilteringState defaultFilters={[]} />
+                <IntegratedFiltering />
+                <Table rowComponent={TableRow} />
+                <TableHeaderRow showSortingControls />
+                <Toolbar />
+                <PagingPanel />
+              </Grid>
+            )) || (
+              <div style={{ textAlign: "center" }}>
+                <h2>{this.props.emptyStateText}</h2>
+              </div>
+            )}
           </CardContent>
         </Card>
       </React.Fragment>
