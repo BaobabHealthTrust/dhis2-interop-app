@@ -38,26 +38,25 @@ export default class Index extends React.Component {
   };
 
   headings = [
-    { name: "Synchronization ID", isNumeric: false },
-    { name: "Added Facilities", isNumeric: true },
-    { name: "Removed Facilities", isNumeric: true },
-    { name: "Updated Facilities", isNumeric: true },
-    { name: "Sync Date", isNumeric: false }
-  ];
-
-  values = [
-    ["efjsffs", 23, 14, 222, "October 14, 2018"],
-    ["fasdfsdf3243jasd", 18, 3, 123, "September 15, 2018"],
-    ["dsfadjf34214", 7, 1, 100, "August 10, 2018"]
+    { name: "synchronizationId", title: "Synchronization ID" },
+    { name: "totalFacilitiesAdded", title: "Added Facilities" },
+    { name: "totalFacilitiesRemoved", title: "Removed Facilities" },
+    { name: "totalFacilitiesUpdated", title: "Updated Facilities" },
+    { name: "synchronizationDate", title: "Sync Date" }
   ];
 
   async componentDidMount() {
     console.clear();
-    const syncs = await mockSyncs();
-    console.log(syncs);
-    this.setState({
-      synchronizations: syncs
-    });
+    const response = await axios.get(
+      "http://142.93.203.254:5001/interop-manager/synchronizations",
+      {
+        auth: {
+          username: "mhfr",
+          password: "mhfr"
+        }
+      }
+    );
+    this.setState({ synchronizations: response.data });
   }
 
   clickHandler = async () => {
@@ -94,7 +93,7 @@ export default class Index extends React.Component {
 
   getValues = () => {
     const facilities = this.state.facilities;
-    if (facilities.length > 0) {
+    if (this.state.isShowingFetchedFacilities) {
       const data = [];
       facilities.forEach(facility => {
         const facilityData = {};
@@ -119,7 +118,7 @@ export default class Index extends React.Component {
       });
       return data;
     }
-    return [];
+    return this.state.synchronizations;
   };
   getHeadings = () => {
     const unwantedHeaders = [
@@ -134,14 +133,13 @@ export default class Index extends React.Component {
         ? Object.keys(this.state.facilities[0])
             .filter(header => !unwantedHeaders.includes(header))
             .map(heading => {
-              return {
-                name: heading,
-                title: heading
-              };
+              return { name: heading, title: heading };
             })
         : [];
-    synchedHeaders.push({ name: "status", title: "status" });
-    console.log(synchedHeaders);
+    synchedHeaders.push({
+      name: "status",
+      title: "status"
+    });
     return this.state.isShowingFetchedFacilities
       ? synchedHeaders
       : this.headings;

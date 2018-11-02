@@ -28,7 +28,7 @@ class TableGrid extends React.Component {
     const TableRow = ({ row, ...restProps }) => (
       <Table.Row
         {...restProps}
-        onClick={() => this.props.rowSelected(row)}
+        onClick={() => null}
         style={{
           cursor: "pointer"
         }}
