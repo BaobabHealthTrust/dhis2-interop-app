@@ -4,12 +4,7 @@ import styled, { consolidateStreamedStyles } from "styled-components";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import { Typography, Button } from "@material-ui/core";
 import axios from "axios";
-import mockSyncs from "../utils/mock-syncs";
-
-const Wrapper = styled.div`
-  padding: 5%;
-`;
-
+import { Wrapper, Red, Green } from "../styled-components";
 const Feedback = styled.div`
   display: flex;
   flex-direction: "row";
@@ -99,8 +94,13 @@ export default class Index extends React.Component {
   };
 
   facilityStatus = facility => {
-    if (facility.isNew) {
-      return <span>new facility</span>;
+    console.log(facility);
+    if (facility.isRecent) {
+      return (
+        <Green>
+          <span>new facility</span>
+        </Green>
+      );
     } else if (facility.isRemoved) {
       return <span>removed</span>;
     }
@@ -119,13 +119,15 @@ export default class Index extends React.Component {
           } else {
             facilityData[key] = (
               <span style={{ fontSize: "90%" }}>
-                <span style={{ color: "#4CAF50" }}>
-                  + {facility[key].newValue || "not available"}
-                </span>
+                <Green>
+                  <span>+ {facility[key].newValue || "not available"}</span>
+                </Green>
                 <br />
-                <span style={{ color: "#F44336" }}>
-                  - {facility[key].previousValue || "not available"}
-                </span>
+                <Red>
+                  <span>
+                    - {facility[key].previousValue || "not available"}
+                  </span>
+                </Red>
               </span>
             );
           }

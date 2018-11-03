@@ -5,10 +5,7 @@ import { Switch, Route } from "react-router";
 import { Toolbar } from "./components";
 import Synchronizations from "./synchronization";
 import "./App.css";
-
-const Migrations = () => {
-  return <h1>Hey From Migrations</h1>;
-};
+import Migrations from "./migrations";
 
 const Footer = () => {
   return <div>Hey I'm a Footer</div>;
