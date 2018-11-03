@@ -1,12 +1,15 @@
-import React from "react";
-import { Jumbotron, Table, Grid } from "../components";
-import styled, { consolidateStreamedStyles } from "styled-components";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import { Typography, Button } from "@material-ui/core";
+import React from "react";
 import axios from "axios";
-import { Wrapper, Red, Green } from "../styled-components";
-import Synchronization from "./utils/synchronization";
+import styled, { consolidateStreamedStyles } from "styled-components";
+
+import { Jumbotron, Table, Grid } from "../components";
 import settings from "./../settings";
+import { Wrapper, Red, Green } from "../styled-components";
+
+import Synchronization from "./utils/synchronization";
+import OpenHim from "./utils/OpenHimData"
 
 const Feedback = styled.div`
   display: flex;
@@ -35,7 +38,8 @@ export default class Index extends React.Component {
     isShowingFetchedFacilities: false,
     facilities: [],
     synchronizations: [],
-    emptyStateText: ""
+    emptyStateText: "",
+    feedBackMessage: null
   };
 
   headings = [
@@ -47,23 +51,10 @@ export default class Index extends React.Component {
   ];
 
   async componentDidMount() {
-    console.clear();
-    console.log(settings);
     this.setState({ isFetchingSynchronizations: true });
-    const response = await axios.get(
-      "http://142.93.203.254:5001/interop-manager/synchronizations",
-      {
-        auth: {
-          username: settings.openHimUser,
-          password: settings.openHimPassword
-        }
-      }
-    );
-    console.log(response.data);
-    this.setState({
-      synchronizations: response.data,
-      isFetchingSynchronizations: false
-    });
+    const openHim = new OpenHim()
+    const synchronizations = await openHim.fetchSynchronization()
+    this.setState({ synchronizations, isFetchingSynchronizations: false});
   }
 
   getEmptyStateText = () => {
@@ -75,18 +66,17 @@ export default class Index extends React.Component {
     return "No Data";
   };
 
+  /**
+   * Get changed facilities when clicked
+   */
   clickHandler = async () => {
     this.setState({ isFetchingFacilities: true });
-    const response = await axios({
-      url: "http://142.93.203.254:5001/interop-manager/changedFacilities",
-      method: "get",
-      auth: {
-        username: "mhfr",
-        password: "mhfr"
-      }
-    });
+
+    const openHim = new OpenHim();
+    const facilities = await openHim.fetchChangedFacilities();
+
     await this.setState({
-      facilities: response.data,
+      facilities,
       isFetchingFacilities: false,
       isShowingFetchedFacilities: true
     });
@@ -99,7 +89,6 @@ export default class Index extends React.Component {
   };
 
   facilityStatus = facility => {
-    console.log(facility);
     if (facility.isRecent) {
       return (
         <Green>
@@ -171,57 +160,10 @@ export default class Index extends React.Component {
       : this.headings;
   };
 
-  addToDHIS2 = async () => {
-    const newFacilities = this.state.facilities.filter(
-      facility => facility.isNew
-    );
-
-    if (newFacilities.length > 0) {
-      const dhis2CompatFacilities = newFacilities.map(newFacility => ({
-        name: newFacility.Name.newValue,
-        shortName: newFacility.CommonName.newValue,
-        openingDate: newFacility.DateOpened.newValue,
-        parent: {
-          name: newFacility.District.newValue + "-DHO"
-        }
-      }));
-      for (let dhis2CompatFacility of dhis2CompatFacilities) {
-        const res = await fetch(
-          `http://192.168.2.252:7000/training/api/organisationUnits.json?filter=name:ilike:${
-            dhis2CompatFacility.parent.name
-          }&fields=[id]`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Basic ${btoa(":/")}`
-            }
-          }
-        );
-        const data = await res.json();
-        dhis2CompatFacility.parent.id = data.organisationUnits[0].id;
-        await fetch(
-          "http://192.168.2.252:7000/training/api/28/organisationUnits",
-          {
-            method: "POST",
-            body: JSON.stringify(dhis2CompatFacility),
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Basic ${btoa("")}`
-            }
-          }
-        );
-      }
-    }
-  };
-
-  updateFacility = async () => {
-    const sync = new Synchronization();
-    await sync.syncFacilities(this.state.facilities);
-  };
-
   syncFacilitiesHandler = async () => {
-    await this.addToDHIS2();
+    const sync = new Synchronization();
+    const feedBackMessage = await sync.syncFacilities(this.state.facilities);
+    this.setState({ feedBackMessage })
   };
 
   render() {
@@ -232,18 +174,23 @@ export default class Index extends React.Component {
           buttonTitle="Fetch Facilities from MHFR"
           buttonHandler={this.clickHandler}
         />{" "}
+
         {this.state.isFetchingFacilities && <LinearProgress className="mt-4" />}{" "}
+
         {this.state.facilities.length > 0 &&
           renderFetchFeedback(
             this.state.facilities.length,
             this.syncFacilitiesHandler
           )}
+
         <Grid
           columns={this.getHeadings()}
           rows={this.getValues()}
           emptyStateText={this.getEmptyStateText()}
         />
+
       </Wrapper>
     );
   }
+
 }
