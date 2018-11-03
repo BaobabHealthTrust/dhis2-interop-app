@@ -5,6 +5,9 @@ import LinearProgress from "@material-ui/core/LinearProgress";
 import { Typography, Button } from "@material-ui/core";
 import axios from "axios";
 import { Wrapper, Red, Green } from "../styled-components";
+import React from "react";
+import Synchronization from "./utils/synchronization";
+
 const Feedback = styled.div`
   display: flex;
   flex-direction: "row";
@@ -16,11 +19,12 @@ const Feedback = styled.div`
 const renderFetchFeedback = (totalFacilities, syncFacilitiesHandler) => (
   <Feedback>
     <Typography variant="button" color="primary">
-      {`Finished fetching ${totalFacilities} Facilities from MHFR since last sync`}
-    </Typography>
+      {" "}
+      {`Finished fetching ${totalFacilities} Facilities from MHFR since last sync`}{" "}
+    </Typography>{" "}
     <Button color="primary" onClick={syncFacilitiesHandler}>
-      sync facilities
-    </Button>
+      sync facilities{" "}
+    </Button>{" "}
   </Feedback>
 );
 
@@ -138,6 +142,7 @@ export default class Index extends React.Component {
     }
     return this.state.synchronizations;
   };
+
   getHeadings = () => {
     const unwantedHeaders = [
       "OpenLMISCode",
@@ -192,10 +197,7 @@ export default class Index extends React.Component {
             }
           }
         );
-        // console.log(await res.json());
         const data = await res.json();
-        // console.clear();
-        // console.log(data.organisationUnits);
         dhis2CompatFacility.parent.id = data.organisationUnits[0].id;
         await fetch(
           "http://192.168.2.252:7000/training/api/28/organisationUnits",
@@ -211,48 +213,10 @@ export default class Index extends React.Component {
       }
     }
   };
+
   updateFacility = async () => {
-    const updatedFacilities = this.state.facilities.filter(
-      facility => !(facility.isNew && facility.isRemoved)
-    );
-    if (updatedFacilities.length > 0) {
-      const dhis2CompatFacilities = updatedFacilities.map(newFacility => ({
-        name: newFacility.Name.newValue,
-        shortName: newFacility.CommonName.newValue,
-        openingDate: newFacility.DateOpened.newValue,
-        parent: {
-          name: newFacility.District.newValue + "-DHO"
-        }
-      }));
-      for (let dhis2CompatFacility of dhis2CompatFacilities) {
-        const getParentId = await fetch(
-          `http://192.168.2.252:7000/training/api/organisationUnits.json?filter=name:ilike:${
-            dhis2CompatFacility.parent.name
-          }&fields=[id]`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Basic ${btoa(":/")}`
-            }
-          }
-        );
-        const data = await getParentId.json();
-        dhis2CompatFacility.parent.id = data.organisationUnits[0].id;
-        const getFacilityId = await fetch(
-          `http://192.168.2.252:7000/training/api/organisationUnits.json?filter=name:ilike:${
-            dhis2CompatFacility.parent.name
-          }&fields=[id]`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Basic ${btoa(":/")}`
-            }
-          }
-        );
-      }
-    }
+    const sync = new Synchronization();
+    await sync.syncFacilities(this.state.facilities);
   };
 
   syncFacilitiesHandler = async () => {
@@ -267,8 +231,8 @@ export default class Index extends React.Component {
           isFetching={this.state.isFetchingFacilities}
           buttonTitle="Fetch Facilities from MHFR"
           buttonHandler={this.clickHandler}
-        />
-        {this.state.isFetchingFacilities && <LinearProgress className="mt-4" />}
+        />{" "}
+        {this.state.isFetchingFacilities && <LinearProgress className="mt-4" />}{" "}
         {this.state.facilities.length > 0 &&
           renderFetchFeedback(
             this.state.facilities.length,
@@ -279,11 +243,6 @@ export default class Index extends React.Component {
           rows={this.getValues()}
           emptyStateText={this.getEmptyStateText()}
         />
-        {/* <Table
-          headings={this.getHeadings()}
-          values={this.getValues()}
-          title={this.getTitle()}
-        /> */}
       </Wrapper>
     );
   }
