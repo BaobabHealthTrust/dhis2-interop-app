@@ -1,14 +1,14 @@
-import React from "react";
-import { Jumbotron, Table } from "../components";
-import styled from "styled-components";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import { Typography, Button } from "@material-ui/core";
+import React from "react";
 import axios from "axios";
+import styled from "styled-components";
+
+import { Jumbotron, Table } from "../components";
+
 import Synchronization from "./utils/synchronization";
 
-const Wrapper = styled.div`
-  padding: 5%;
-`;
+const Wrapper = styled.div` padding: 5%; `;
 
 const Feedback = styled.div`
   display: flex;
@@ -135,6 +135,7 @@ export default class Index extends React.Component {
     }
     return this.values;
   };
+
   getHeadings = () => {
     const unwantedHeaders = [
       "OpenLMISCode",
@@ -210,9 +211,10 @@ export default class Index extends React.Component {
       }
     }
   };
+
   updateFacility = async () => {
     const sync = new Synchronization();
-    await sync.updateFacility(this.state.facilities);
+    await sync.syncFacilities(this.state.facilities);
   };
 
   syncFacilitiesHandler = async () => {
