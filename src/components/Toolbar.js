@@ -33,7 +33,7 @@ export default (props) => {
         <Toolbar>
           <Typography variant='title' color='inherit'>{strings.TITLE}</Typography>
           <MenuItem active={getUrl() === '/'}><Link to='/'>Synchronize Facilities</Link></MenuItem>
-          <MenuItem active={getUrl() === '/migrations'}><Link to='/migrations'>Migrate OpenLMIS Data</Link></MenuItem>
+          <MenuItem active={getUrl() === '/migrations'}><Link to='/migrations'>Migrate DHAMIS Data</Link></MenuItem>
         </Toolbar>
       </AppBar>
     </React.Fragment>
