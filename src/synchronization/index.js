@@ -221,8 +221,7 @@ export default class Index extends React.Component {
   };
 
   syncFacilitiesHandler = async () => {
-    // await this.addToDHIS2();
-    console.log(this.state.facilities);
+    await this.addToDHIS2();
   };
 
   render() {
