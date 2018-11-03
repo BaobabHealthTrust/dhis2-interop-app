@@ -28,6 +28,7 @@ export default class Synchronization {
     for (let facility of facilities) {
       const { isRecent, isRemoved } = facility;
 
+      console.log(facility)
       if (isRecent) {
         const preparedFacility = await this.prepareFacility(facility);
         await this.addFacility(preparedFacility);
@@ -46,9 +47,36 @@ export default class Synchronization {
         const { code = null } = preparedFacility
         console.log(code," : ", preparedFacility.name, " : " , preparedFacility.parent.name);
         const id = await this.findDHIS2Facility(code);
-        // if(id) await this.updateFacility(preparedFacility, id)
+        if(id) await this.updateFacility(preparedFacility, id)
       }
     }
+
+    const {
+      openHimURL: URL,
+      openHimPassword: password,
+      openHimUser: username
+    } = settings
+
+    const data = {
+      "totalFacilitiesAdded": facilities.map( e => e.isRecent == true).length,
+      "totalFacilitiesRemoved": facilities.map(e => e.isRemoved == true).length,
+      "totalFacilitiesUpdated": facilities.map(e => e.isRecent == false && e.isRemoved == false ).length,
+      "isSuccessful": true,
+      facilities
+    }
+
+    const url = `${URL}/interop-manager/synchronizations`;
+
+    const res = await axios({
+      method: "POST",
+      url,
+      auth: { username, password },
+      headers: { "Content-Type": "application/json" },
+      data
+    }).catch(err => console.log(err));
+
+    return res.data
+
   }
 
   async findDHIS2Facility(code) {
@@ -96,8 +124,6 @@ export default class Synchronization {
   }
 
   async updateFacility(facility, id) {
-    // hit the DHIS2 update endpoint with the facility and id
-
     const {
       dhis2URL: URL,
       dhis2User: username,
@@ -106,7 +132,6 @@ export default class Synchronization {
 
     const name = facility.parent.name
 
-    console.log("facility: ", name, id);
     let url = `${URL}/training/api/organisationUnits.json?filter=name:eq:${name}&fields=id`
     let req = await axios({
       method: "get",
@@ -131,50 +156,57 @@ export default class Synchronization {
       }
     }
 
-    console.log(data)
+    req = await axios({
+      method: "PATCH",
+      url,
+      auth: { username, password },
+      headers: { "Content-Type": "application/json" },
+      data,
+    }).catch(err => console.log(err));
 
-    // req = await axios({
-    //   method: "PUT",
-    //   url,
-    //   auth: { username, password },
-    //   headers: { "Content-Type": "application/json" },
-    //   data,
-    // }).catch(err => console.log(err));
-
-    // console.log(req)
   }
 
   async addFacility(facility) {
-    // hit the DHIS2 add endpoint with the facility
+    const {
+      dhis2URL: URL,
+      dhis2User: username,
+      dhis2Password: password
+    } = settings;
 
-    const res = await fetch(
-      `http://192.168.2.252:7000/training/api/organisationUnits.json?filter=name:ilike:${
-      facility.parent.name
-      }&fields=[id]`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Basic ${btoa(":/")}`
-        }
+    const name = facility.parent.name
+
+    let url = `${URL}/training/api/organisationUnits.json?filter=name:eq:${name}&fields=id`
+
+    let req = await axios({
+      method: "get",
+      url,
+      auth: { username, password },
+      headers: { "Content-Type": "application/json" }
+    }).catch(err => console.log(err));
+
+    const { organisationUnits } = req.data;
+    const [parentId] = organisationUnits;
+
+    const data = {
+      name: facility.name,
+      code: facility.code,
+      shortName: facility.shortName,
+      openingDate: facility.openingDate,
+      parent: {
+        name: facility.parent.name,
+        id: parentId.id
       }
-    );
-    // console.log(await res.json());
-    const data = await res.json();
-    // console.clear();
-    // console.log(data.organisationUnits);
-    facility.parent.id = data.organisationUnits[0].id;
-    await fetch(
-      "http://192.168.2.252:7000/training/api/28/organisationUnits",
-      {
-        method: "POST",
-        body: JSON.stringify(facility),
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Basic ${btoa("")}`
-        }
-      }
-    );
+    }
+
+    url = `${URL}/training/api/28/organisationUnits`;
+
+    req = await axios({
+      method: "POST",
+      url,
+      auth: { username, password },
+      headers: { "Content-Type": "application/json" },
+      data
+    }).catch(err => console.log(err));
   }
 
   async deleteFacility(id) {
