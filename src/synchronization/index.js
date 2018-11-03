@@ -5,8 +5,8 @@ import LinearProgress from "@material-ui/core/LinearProgress";
 import { Typography, Button } from "@material-ui/core";
 import axios from "axios";
 import { Wrapper, Red, Green } from "../styled-components";
-import React from "react";
 import Synchronization from "./utils/synchronization";
+import settings from "./../settings";
 
 const Feedback = styled.div`
   display: flex;
@@ -48,13 +48,14 @@ export default class Index extends React.Component {
 
   async componentDidMount() {
     console.clear();
+    console.log(settings);
     this.setState({ isFetchingSynchronizations: true });
     const response = await axios.get(
       "http://142.93.203.254:5001/interop-manager/synchronizations",
       {
         auth: {
-          username: "mhfr",
-          password: "mhfr"
+          username: settings.openHimUser,
+          password: settings.openHimPassword
         }
       }
     );
