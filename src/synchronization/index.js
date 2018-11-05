@@ -9,7 +9,7 @@ import settings from "./../settings";
 import { Wrapper, Red, Green } from "../styled-components";
 
 import Synchronization from "./utils/synchronization";
-import OpenHim from "./utils/OpenHimData"
+import OpenHim from "./utils/OpenHimData";
 
 const Feedback = styled.div`
   display: flex;
@@ -52,9 +52,9 @@ export default class Index extends React.Component {
 
   async componentDidMount() {
     this.setState({ isFetchingSynchronizations: true });
-    const openHim = new OpenHim()
-    const synchronizations = await openHim.fetchSynchronization()
-    this.setState({ synchronizations, isFetchingSynchronizations: false});
+    const openHim = new OpenHim();
+    const synchronizations = await openHim.fetchSynchronization();
+    this.setState({ synchronizations, isFetchingSynchronizations: false });
   }
 
   getEmptyStateText = () => {
@@ -92,13 +92,17 @@ export default class Index extends React.Component {
     if (facility.isRecent) {
       return (
         <Green>
-          <span>new facility</span>
+          <span>new</span>
         </Green>
       );
     } else if (facility.isRemoved) {
-      return <span>removed</span>;
+      return (
+        <Red>
+          <span>removed</span>
+        </Red>
+      );
     }
-    return <span style={{ color: "#ffae22" }}>updated facility</span>;
+    return <span style={{ color: "#ffae22" }}>updated</span>;
   };
 
   getValues = () => {
@@ -111,19 +115,27 @@ export default class Index extends React.Component {
           if (key == "isRecent" || key == "isRemoved") {
             facilityData["status"] = this.facilityStatus(facility);
           } else {
-            facilityData[key] = (
-              <span style={{ fontSize: "90%" }}>
-                <Green>
-                  <span>+ {facility[key].newValue || "not available"}</span>
-                </Green>
-                <br />
-                <Red>
-                  <span>
-                    - {facility[key].previousValue || "not available"}
-                  </span>
-                </Red>
-              </span>
-            );
+            if (facility[key].newValue === facility[key].previousValue) {
+              facilityData[key] = (
+                <span style={{ fontSize: "90%" }}>
+                  {facility[key].newValue}
+                </span>
+              );
+            } else {
+              facilityData[key] = (
+                <span style={{ fontSize: "90%" }}>
+                  <Green>
+                    <span>+ {facility[key].newValue || "not available"}</span>
+                  </Green>
+                  <br />
+                  <Red>
+                    <span>
+                      - {facility[key].previousValue || "not available"}
+                    </span>
+                  </Red>
+                </span>
+              );
+            }
           }
         });
         data.push(facilityData);
@@ -163,7 +175,7 @@ export default class Index extends React.Component {
   syncFacilitiesHandler = async () => {
     const sync = new Synchronization();
     const feedBackMessage = await sync.syncFacilities(this.state.facilities);
-    this.setState({ feedBackMessage })
+    this.setState({ feedBackMessage });
   };
 
   render() {
@@ -174,23 +186,18 @@ export default class Index extends React.Component {
           buttonTitle="Fetch Facilities from MHFR"
           buttonHandler={this.clickHandler}
         />{" "}
-
         {this.state.isFetchingFacilities && <LinearProgress className="mt-4" />}{" "}
-
         {this.state.facilities.length > 0 &&
           renderFetchFeedback(
             this.state.facilities.length,
             this.syncFacilitiesHandler
           )}
-
         <Grid
           columns={this.getHeadings()}
           rows={this.getValues()}
           emptyStateText={this.getEmptyStateText()}
         />
-
       </Wrapper>
     );
   }
-
 }
