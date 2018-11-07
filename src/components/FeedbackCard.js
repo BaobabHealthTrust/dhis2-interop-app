@@ -9,7 +9,8 @@ import classnames from "classnames";
 
 const styles = {
   card: {
-    backgroundColor: "#9CCC65"
+    backgroundColor: "#9CCC65",
+    color: "white"
   }
 };
 
