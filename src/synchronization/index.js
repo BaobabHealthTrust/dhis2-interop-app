@@ -1,10 +1,11 @@
 import LinearProgress from "@material-ui/core/LinearProgress";
-import { Typography, Button } from "@material-ui/core";
+import { Typography, Button, Card } from "@material-ui/core";
+import CardContent from "@material-ui/core/CardContent";
 import React from "react";
 import axios from "axios";
 import styled, { consolidateStreamedStyles } from "styled-components";
 
-import { Jumbotron, Table, Grid } from "../components";
+import { Jumbotron, Table, Grid, FeedbackCard } from "../components";
 import settings from "./../settings";
 import { Wrapper, Red, Green } from "../styled-components";
 
@@ -39,7 +40,8 @@ export default class Index extends React.Component {
     facilities: [],
     synchronizations: [],
     emptyStateText: "",
-    feedBackMessage: null
+    feedBackMessage: null,
+    isSynchronizing: false
   };
 
   headings = [
@@ -81,6 +83,10 @@ export default class Index extends React.Component {
       isShowingFetchedFacilities: true
     });
   };
+
+  hideFeedbackCardHandler = async () => {
+    this.setState({ feedBackMessage: null });
+  }
 
   getTitle = () => {
     return this.state.isShowingFetchedFacilities
@@ -161,9 +167,12 @@ export default class Index extends React.Component {
   };
 
   syncFacilitiesHandler = async () => {
+    this.setState({ isSynchronizing: true });
+
     const sync = new Synchronization();
     const feedBackMessage = await sync.syncFacilities(this.state.facilities);
-    this.setState({ feedBackMessage })
+
+    this.setState({ feedBackMessage, isSynchronizing: false });
   };
 
   render() {
@@ -173,15 +182,22 @@ export default class Index extends React.Component {
           isFetching={this.state.isFetchingFacilities}
           buttonTitle="Fetch Facilities from MHFR"
           buttonHandler={this.clickHandler}
-        />{" "}
+        />
 
-        {this.state.isFetchingFacilities && <LinearProgress className="mt-4" />}{" "}
+        {(this.state.isFetchingFacilities || this.state.isSynchronizing) && <LinearProgress className="mt-4" />}
 
-        {this.state.facilities.length > 0 &&
+        {(this.state.facilities.length > 0 && !this.state.feedBackMessage) &&
           renderFetchFeedback(
             this.state.facilities.length,
             this.syncFacilitiesHandler
           )}
+
+        {this.state.feedBackMessage && (
+          <div>
+            <br/>
+            <FeedbackCard handleClick={this.hideFeedbackCardHandler} feedback={this.state.feedBackMessage} />
+          </div>
+        )}
 
         <Grid
           columns={this.getHeadings()}
