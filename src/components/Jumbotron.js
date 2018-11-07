@@ -14,10 +14,10 @@ const styles = theme => ({
 const Jumbotron = ({ classes, buttonTitle, buttonHandler, isFetching }) => {
   return (
     <Paper elevation="0" className={classes.root}>
-      <Typography variant="title">
+      <Typography style={{ color: "#fffafa" }} variant="title">
         Welcome to the Interoperability Layer
       </Typography>
-      <Typography style={{ margin: 5 }} variant="subheading">
+      <Typography style={{ margin: 5, color: "#fffafa" }} variant="subheading">
         This tool allows you to connect with the interoperability Layer and
         perform the various interoperability Tasks
       </Typography>
