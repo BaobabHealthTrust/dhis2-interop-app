@@ -10,7 +10,7 @@ import settings from "./../settings";
 import { Wrapper, Red, Green } from "../styled-components";
 
 import Synchronization from "./utils/synchronization";
-import OpenHim from "./utils/OpenHimData"
+import OpenHim from "./utils/OpenHimData";
 
 const Feedback = styled.div`
   display: flex;
@@ -54,9 +54,9 @@ export default class Index extends React.Component {
 
   async componentDidMount() {
     this.setState({ isFetchingSynchronizations: true });
-    const openHim = new OpenHim()
-    const synchronizations = await openHim.fetchSynchronization()
-    this.setState({ synchronizations, isFetchingSynchronizations: false});
+    const openHim = new OpenHim();
+    const synchronizations = await openHim.fetchSynchronization();
+    this.setState({ synchronizations, isFetchingSynchronizations: false });
   }
 
   getEmptyStateText = () => {
@@ -86,7 +86,7 @@ export default class Index extends React.Component {
 
   hideFeedbackCardHandler = async () => {
     this.setState({ feedBackMessage: null });
-  }
+  };
 
   getTitle = () => {
     return this.state.isShowingFetchedFacilities
@@ -102,7 +102,11 @@ export default class Index extends React.Component {
         </Green>
       );
     } else if (facility.isRemoved) {
-      return <span>removed</span>;
+      return (
+        <Red>
+          <span>removed</span>
+        </Red>
+      );
     }
     return <span style={{ color: "#ffae22" }}>updated facility</span>;
   };
@@ -117,19 +121,27 @@ export default class Index extends React.Component {
           if (key == "isRecent" || key == "isRemoved") {
             facilityData["status"] = this.facilityStatus(facility);
           } else {
-            facilityData[key] = (
-              <span style={{ fontSize: "90%" }}>
-                <Green>
-                  <span>+ {facility[key].newValue || "not available"}</span>
-                </Green>
-                <br />
-                <Red>
-                  <span>
-                    - {facility[key].previousValue || "not available"}
-                  </span>
-                </Red>
-              </span>
-            );
+            if (facility[key].newValue === facility[key].previousValue) {
+              facilityData[key] = (
+                <span style={{ fontSize: "90%" }}>
+                  {facility[key].newValue}
+                </span>
+              );
+            } else {
+              facilityData[key] = (
+                <span style={{ fontSize: "90%" }}>
+                  <Green>
+                    <span>+ {facility[key].newValue || "not available"}</span>
+                  </Green>
+                  <br />
+                  <Red>
+                    <span>
+                      - {facility[key].previousValue || "not available"}
+                    </span>
+                  </Red>
+                </span>
+              );
+            }
           }
         });
         data.push(facilityData);
@@ -184,9 +196,12 @@ export default class Index extends React.Component {
           buttonHandler={this.clickHandler}
         />
 
-        {(this.state.isFetchingFacilities || this.state.isSynchronizing) && <LinearProgress className="mt-4" />}
+        {(this.state.isFetchingFacilities || this.state.isSynchronizing) && (
+          <LinearProgress className="mt-4" />
+        )}
 
-        {(this.state.facilities.length > 0 && !this.state.feedBackMessage) &&
+        {this.state.facilities.length > 0 &&
+          !this.state.feedBackMessage &&
           renderFetchFeedback(
             this.state.facilities.length,
             this.syncFacilitiesHandler
@@ -194,8 +209,11 @@ export default class Index extends React.Component {
 
         {this.state.feedBackMessage && (
           <div>
-            <br/>
-            <FeedbackCard handleClick={this.hideFeedbackCardHandler} feedback={this.state.feedBackMessage} />
+            <br />
+            <FeedbackCard
+              handleClick={this.hideFeedbackCardHandler}
+              feedback={this.state.feedBackMessage}
+            />
           </div>
         )}
 
@@ -204,9 +222,7 @@ export default class Index extends React.Component {
           rows={this.getValues()}
           emptyStateText={this.getEmptyStateText()}
         />
-
       </Wrapper>
     );
   }
-
 }
