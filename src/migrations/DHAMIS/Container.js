@@ -32,26 +32,41 @@ class Container extends Component {
     }).catch(err => console.log(err));
 
     const migrations = req ? req.data : [];
-    this.setState({ migrations, isFetchingMigrations: false });
+    await this.setState({ migrations, isFetchingMigrations: false });
+    console.log(this.state.migrations);
   }
 
-  clickHandler = () => {
-    console.log("fetching dhamis migrations");
-    this.setState({ isFetchingMigrations: true });
-    this.setState({ isFetchingMigrations: false });
-  };
+  headings = [
+    { name: "_id", title: "ID" },
+    { name: "period", title: "Period" },
+    { name: "successful_records", title: "Successful Records" },
+    { name: "failed_records", title: "Failed Records" },
+    { name: "migration_date", title: "Date" }
+  ];
 
-  grid = <Grid columns="Malu" rows={[]} emptyStateText={"no values"} />;
+  grid = () => (
+    <Grid
+      rows={this.state.migrations}
+      columns={this.headings}
+      // emptyStateText={"Malu"}
+    />
+  );
+
+  getEmptyStateText = () =>
+    this.state.isFetchingMigrations ? "Fetching Migrations..." : "No Data";
+
+  loader = () => {
+    const { isFetchingMigrations } = this.state;
+    return isFetchingMigrations ? <LinearProgress className="mt-4" /> : "";
+  };
 
   render() {
     return (
       <div>
         <Wrapper>
           <Form handleClick={this.clickHandler} />
-          {this.state.isFetchingMigrations && (
-            <LinearProgress className="mt-4" />
-          )}
-          {this.grid}
+          {this.loader()}
+          {this.grid()}
         </Wrapper>
       </div>
     );

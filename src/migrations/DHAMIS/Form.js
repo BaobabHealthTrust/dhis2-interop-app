@@ -91,33 +91,33 @@ class ControlledOpenSelect extends React.Component {
   onclick = async () => {
     const { quarter = 0, year = 0 } = this.state;
 
-    const {
-      OPENHIM_URL: URL,
-      OPENHIM_PASSWORD: password,
-      OPENHIM_USER: username
-    } = settings;
-
-    const data = {
-      year: this.state.year,
-      quarter: this.state.quarter
-    };
-
-    const url = `${URL}/interop-manager/synchronizations`;
-
-    const res = await axios({
-      method: "POST",
-      url,
-      auth: { username, password },
-      headers: { "Content-Type": "application/json" },
-      data
-    }).catch(err => console.log(err));
-
     await this.setState({
       quarterError: quarter === 0 ? true : false,
       yearError: year === 0 ? true : false
     });
 
-    await this.props.handleClick();
+    if (!this.state.quarterError && !this.state.yearError) {
+      const {
+        OPENHIM_URL: URL,
+        OPENHIM_PASSWORD: password,
+        OPENHIM_USER: username
+      } = settings;
+
+      const data = {
+        year: this.state.year,
+        quarter: this.state.quarter
+      };
+
+      const url = `${URL}/interop-manager/migrations/openlmis`;
+
+      const res = await axios({
+        method: "POST",
+        url,
+        auth: { username, password },
+        headers: { "Content-Type": "application/json" },
+        data
+      }).catch(err => console.log(err));
+    }
   };
 
   render() {
