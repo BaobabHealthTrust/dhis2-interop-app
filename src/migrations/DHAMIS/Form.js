@@ -110,6 +110,8 @@ class ControlledOpenSelect extends React.Component {
 
       const url = `${URL}/interop-manager/migrations/openlmis`;
 
+      console.log("making a post request");
+
       const res = await axios({
         method: "POST",
         url,
@@ -117,6 +119,8 @@ class ControlledOpenSelect extends React.Component {
         headers: { "Content-Type": "application/json" },
         data
       }).catch(err => console.log(err));
+
+      console.log(res);
     }
   };
 
