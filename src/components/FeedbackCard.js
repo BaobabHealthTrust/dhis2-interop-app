@@ -11,16 +11,16 @@ const styles = {
   card: {
     backgroundColor: "#9CCC65"
   }
-}
+};
 
-export default (props) => {
+export default props => {
   const {
     facilities,
     totalFacilitiesAdded,
     totalFacilitiesRemoved,
     totalFacilitiesUpdated,
     classes
-  } = props.feedback
+  } = props.feedback;
 
   const handleClick = props.handleClick;
 
@@ -29,19 +29,21 @@ export default (props) => {
       <CardHeader
         action={
           <IconButton>
-            <MoreVertIcon onClick={handleClick}/>
+            <MoreVertIcon onClick={handleClick} />
           </IconButton>
         }
         title="Synchronization Message"
       />
       <CardContent>
         <Typography>
-          <b>Total Facilities Added:</b> {totalFacilitiesAdded}<br />
-          <b>Total Facilities Updated:</b> {totalFacilitiesUpdated}<br />
-          <b>Total Facilities Removed:</b> {totalFacilitiesUpdated}<br />
+          <b>Total Facilities Added:</b> {totalFacilitiesAdded}
+          <br />
+          <b>Total Facilities Updated:</b> {totalFacilitiesUpdated}
+          <br />
+          <b>Total Facilities Removed:</b> {totalFacilitiesRemoved}
+          <br />
         </Typography>
       </CardContent>
     </Card>
   );
-
-}
+};

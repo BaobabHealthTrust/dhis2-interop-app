@@ -23,35 +23,54 @@ export default class Synchronization {
   }
 
   async syncFacilities(facilities) {
+    let totalFacilitiesAdded = 0;
+    let totalFacilitiesRemoved = 0;
+    let totalFacilitiesUpdated = 0;
+
     for (let facility of facilities) {
+      if (!facility.DHIS2Code.newValue) {
+        console.log(
+          "No DHIS2 code for facility: ",
+          JSON.stringify(facility, undefined, 2)
+        );
+        continue;
+      }
+      const code = this.preparedFacilityCode(facility.DHIS2Code.newValue);
+
+      const preparedFacility = {
+        name: facility.Name.newValue,
+        shortName: facility.Name.newValue,
+        code,
+        openingDate: facility.DateOpened.newValue
+      };
+
       const { isRecent, isRemoved } = facility;
 
-      console.log(facility);
-      if (isRecent) {
-        const preparedFacility = await this.prepareFacility(facility);
-        await this.addFacility(preparedFacility);
+      if (isRemoved) {
+        const id = await this.findDHIS2Facility(code);
+        await this.deleteFacility(id);
+        totalFacilitiesRemoved += 1;
         continue;
       }
 
-      if (isRemoved) {
-        const code = facility.DHIS2Code.newValue;
-        const id = await this.findDHIS2Facility(code);
-        await this.deleteFacility(id);
+      if (isRecent) {
+        preparedFacility.parent = {
+          name: `${facility.District.newValue.replace(/ /g, "-")}-DHO`
+        };
+        await this.addFacility(preparedFacility);
+        totalFacilitiesUpdated += 1;
         continue;
       }
 
       if (!isRecent && !isRemoved) {
-        const preparedFacility = await this.prepareFacility(facility);
-        const { code = null } = preparedFacility;
-        console.log(
-          code,
-          " : ",
-          preparedFacility.name,
-          " : ",
-          preparedFacility.parent.name
-        );
         const id = await this.findDHIS2Facility(code);
-        if (id) await this.updateFacility(preparedFacility, id);
+        if (!id) {
+          console.log(
+            "No id for facility",
+            JSON.stringify(preparedFacility, undefined, 2)
+          );
+        } else await this.updateFacility(preparedFacility, id);
+        totalFacilitiesUpdated += 1;
       }
     }
 
@@ -62,11 +81,9 @@ export default class Synchronization {
     } = settings;
 
     const data = {
-      totalFacilitiesAdded: facilities.map(e => e.isRecent == true).length,
-      totalFacilitiesRemoved: facilities.map(e => e.isRemoved == true).length,
-      totalFacilitiesUpdated: facilities.map(
-        e => e.isRecent == false && e.isRemoved == false
-      ).length,
+      totalFacilitiesAdded,
+      totalFacilitiesRemoved,
+      totalFacilitiesUpdated,
       isSuccessful: true,
       facilities
     };
@@ -91,7 +108,7 @@ export default class Synchronization {
       DHIS2_PASSWORD: password
     } = settings;
 
-    const url = `${URL}/training/api/organisationUnits.json?filter=code:eq:${code}&fields=id`;
+    const url = `${URL}/api/organisationUnits.json?filter=code:eq:${code}&fields=id`;
 
     const req = await axios({
       method: "get",
@@ -134,39 +151,22 @@ export default class Synchronization {
       DHIS2_PASSWORD: password
     } = settings;
 
-    const name = facility.parent.name;
+    const url = `${URL}/api/28/organisationUnits/${id}`;
 
-    let url = `${URL}/training/api/organisationUnits.json?filter=name:eq:${name}&fields=id`;
-    let req = await axios({
-      method: "get",
-      url,
-      auth: { username, password },
-      headers: { "Content-Type": "application/json" }
-    }).catch(err => console.log(err));
-
-    const { organisationUnits } = req.data;
-    const [parentId] = organisationUnits;
-
-    url = `${URL}/training/api/28/organisationUnits/${id}`;
-
-    const data = {
-      name: facility.name,
-      code: facility.code,
-      shortName: facility.shortName,
-      openingDate: facility.openingDate,
-      parent: {
-        name: facility.parent.name,
-        id: parentId.id
-      }
-    };
-
-    req = await axios({
+    const req = await axios({
       method: "PATCH",
       url,
       auth: { username, password },
       headers: { "Content-Type": "application/json" },
-      data
+      data: facility
     }).catch(err => console.log(err));
+
+    console.log(url);
+    const logMessage = req
+      ? "Facility synchronizationed successfully"
+      : "Facility failed to be synchronizationed";
+
+    console.log(`${logMessage}: `, JSON.stringify(facility, undefined, 2));
   }
 
   async addFacility(facility) {
@@ -178,7 +178,7 @@ export default class Synchronization {
 
     const name = facility.parent.name;
 
-    let url = `${URL}/training/api/organisationUnits.json?filter=name:eq:${name}&fields=id`;
+    let url = `${URL}/api/organisationUnits.json?filter=name:eq:${name}&fields=id`;
 
     let req = await axios({
       method: "get",
@@ -187,21 +187,15 @@ export default class Synchronization {
       headers: { "Content-Type": "application/json" }
     }).catch(err => console.log(err));
 
+    if (!req) return;
+
     const { organisationUnits } = req.data;
     const [parentId] = organisationUnits;
 
-    const data = {
-      name: facility.name,
-      code: facility.code,
-      shortName: facility.shortName,
-      openingDate: facility.openingDate,
-      parent: {
-        name: facility.parent.name,
-        id: parentId.id
-      }
-    };
+    const data = { ...facility };
+    data.parent.id = parentId.id;
 
-    url = `${URL}/training/api/28/organisationUnits`;
+    url = `${URL}/api/28/organisationUnits`;
 
     req = await axios({
       method: "POST",
@@ -213,6 +207,27 @@ export default class Synchronization {
   }
 
   async deleteFacility(id) {
-    // hit delete endpoint with the id
+    const {
+      DHIS2_URL: URL,
+      DHIS2_USER: username,
+      DHIS2_PASSWORD: password
+    } = settings;
+
+    const url = `${URL}/api/28/organisationUnits/${id}`;
+
+    const req = await axios({
+      method: "PATCH",
+      url,
+      auth: { username, password },
+      headers: { "Content-Type": "application/json" },
+      data: { closeDate: new Date() }
+    }).catch(err => console.log(err));
+
+    console.log(url);
+    const logMessage = req
+      ? "Facility deleted successfully"
+      : "Facility failed to be deleted";
+
+    console.log(logMessage);
   }
 }

@@ -132,12 +132,11 @@ export default class Index extends React.Component {
             );
           }
         });
-        console.log(facilityData);
+        data.push(facilityData);
       });
 
       return data;
     }
-    console.log(this.state.synchronizations);
     return this.state.synchronizations;
   };
 

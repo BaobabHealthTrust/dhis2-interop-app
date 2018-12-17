@@ -6,6 +6,7 @@ import Form from "./Form";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import settings from "../../settings";
 import axios from "axios";
+import * as firebase from "firebase";
 
 class Container extends Component {
   state = {
@@ -15,6 +16,22 @@ class Container extends Component {
 
   async componentDidMount() {
     this.setState({ isFetchingMigrations: true });
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDUy6f6_h6Cjmil1LMtPp54Rt5qE440AZw",
+      authDomain: "kuunika-test.firebaseapp.com",
+      databaseURL: "https://kuunika-test.firebaseio.com",
+      projectId: "kuunika-test",
+      storageBucket: "kuunika-test.appspot.com",
+      messagingSenderId: "1021941463275"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+    const dhamisRef = database.ref("dhamis-ref");
+    dhamisRef.on("value", function(snapshot) {
+      console.log(snapshot.val());
+    });
 
     const {
       OPENHIM_URL: URL,
@@ -33,7 +50,6 @@ class Container extends Component {
 
     const migrations = req ? req.data : [];
     await this.setState({ migrations, isFetchingMigrations: false });
-    console.log(this.state.migrations);
   }
 
   headings = [
