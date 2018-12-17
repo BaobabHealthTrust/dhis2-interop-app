@@ -91,6 +91,8 @@ class ControlledOpenSelect extends React.Component {
   onclick = async () => {
     const { quarter = 0, year = 0 } = this.state;
 
+    this.props.toggleMigratingStatus(true)
+
     await this.setState({
       quarterError: quarter === 0 ? true : false,
       yearError: year === 0 ? true : false

@@ -1,26 +1,73 @@
-import { Jumbotron, Grid } from "../../components";
+import { Jumbotron, Grid, CircularProgressBar } from "../../components";
 import { Wrapper } from "../../styled-components";
 import React, { Component } from "react";
-import From from "./Form";
 import Form from "./Form";
 import LinearProgress from "@material-ui/core/LinearProgress";
+import Card from '@material-ui/core/Card';
 import settings from "../../settings";
 import axios from "axios";
+import * as firebase from 'firebase';
+
 
 class Container extends Component {
   state = {
     migrations: [],
-    isFetchingMigrations: false
+    isFetchingMigrations: false,
+    isMigrating: false,
+    migrationPercentage: 0,
+    migrationProgress: '',
+    migrationRecords: '',
   };
+
+  firestore = null
+
+  _updateFactory = (firestore, docName, key) => {
+    firestore.collection("dhamis").doc(docName)
+      .onSnapshot((doc) => {
+        if (doc.data()) {
+          this.setState({
+            [key]: doc.data().state
+          })
+        }
+      });
+  }
+
+  _toggleMigratingStatus = async (isMigrating) => {
+    // await this.firestore.collection('dhamis').doc('migrating').set({
+    //   state: true
+    // });
+    this.setState({
+      isMigrating
+    })
+  }
 
   async componentDidMount() {
     this.setState({ isFetchingMigrations: true });
-
     const {
       OPENHIM_URL: URL,
       OPENHIM_PASSWORD: password,
-      OPENHIM_USER: username
+      OPENHIM_USER: username,
+      FIREBASE_API_KEY: apiKey,
+      FIREBASE_AUTH_DOMAIN: authDomain,
+      FIREBASE_DATABASE_URL: databaseURL,
+      FIREBASE_PROJECT_ID: projectId
     } = settings;
+
+    try {
+      await firebase.initializeApp({
+        apiKey,
+        authDomain,
+        projectId
+      });
+    } catch (e) {
+      console.log('Firebase initialization failed')
+    }
+
+    this.firestore = firebase.firestore();
+
+    this._updateFactory(this.firestore, "progress", "migrationProgress")
+    this._updateFactory(this.firestore, "percentage", "migrationPercentage")
+    this._updateFactory(this.firestore, "migrating", "isMigrating")
 
     const url = `${URL}/interop-manager/migrations/openlmis`;
 
@@ -36,8 +83,13 @@ class Container extends Component {
     console.log(this.state.migrations);
   }
 
+  async componentWillUnmount() {
+    // TODO: Destory the firbase instance probably here
+  }
+
   headings = [
     { name: "_id", title: "ID" },
+    { name: "status", title: "Status" },
     { name: "period", title: "Period" },
     { name: "successful_records", title: "Successful Records" },
     { name: "failed_records", title: "Failed Records" },
@@ -48,7 +100,6 @@ class Container extends Component {
     <Grid
       rows={this.state.migrations}
       columns={this.headings}
-      // emptyStateText={"Malu"}
     />
   );
 
@@ -60,16 +111,36 @@ class Container extends Component {
     return isFetchingMigrations ? <LinearProgress className="mt-4" /> : "";
   };
 
-  render() {
+  _renderDefaultView() {
     return (
       <div>
         <Wrapper>
-          <Form handleClick={this.clickHandler} />
+          <Form handleClick={this.clickHandler} toggleMigratingStatus={this._toggleMigratingStatus} />
           {this.loader()}
+          {this.state.isMigrating && this._renderMigratingView()}
           {this.grid()}
         </Wrapper>
       </div>
-    );
+    )
+  }
+
+  _renderMigratingView() {
+    return (
+      <div>
+        <React.Fragment>
+          <Card style={{ padding: '10px', marginTop: '20px' }}>
+            <h1 style={{ marginBottom: '20px', marginTop: '20px' }}>Migrating dhamis data</h1>
+            <LinearProgress variant="determinate" value={Number(this.state.migrationPercentage)} />
+            <h2 style={{ marginTop: '20px' }}>Progress {this.state.migrationPercentage}%</h2>
+            <h4 style={{ marginTop: '20px' }}>{this.state.migrationProgress}</h4>
+          </Card>
+        </React.Fragment>
+      </div>
+    )
+  }
+
+  render() {
+    return this._renderDefaultView()
   }
 }
 

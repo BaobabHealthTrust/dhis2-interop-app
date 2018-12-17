@@ -8,5 +8,12 @@ export default {
   DHIS2_PASSWORD: "password",
 
   DMAMIS_URL: "",
-  DHAMIS_KEY: ""
+  DHAMIS_KEY: "",
+
+  //Firebase access
+  FIREBASE_API_KEY: "",
+  FIREBASE_AUTH_DOMAIN: "",
+  FIREBASE_DATABASE_URL: "",
+  FIREBASE_PROJECT_ID: ""
+
 };
