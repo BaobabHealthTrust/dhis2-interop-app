@@ -118,7 +118,6 @@ export default class Index extends React.Component {
             facilityData["status"] = this.facilityStatus(facility);
           }
           if (facility[key].newValue === facility[key].previousValue) {
-            console.log("the same")
             facilityData[key] = (
               <span style={{ fontSize: "90%" }}>
                 + {facility[key].newValue || "not available"}
