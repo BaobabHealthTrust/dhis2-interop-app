@@ -17,8 +17,6 @@ export default class OpenHimData {
   async fetchSynchronization() {
     const url = `${this.url}/interop-manager/synchronizations`;
 
-    console.log("Malu");
-
     const facilities = await axios({
       method: "get",
       url,

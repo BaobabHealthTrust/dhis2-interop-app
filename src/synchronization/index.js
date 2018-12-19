@@ -116,6 +116,14 @@ export default class Index extends React.Component {
         Object.keys(facility).forEach(key => {
           if (key == "isRecent" || key == "isRemoved") {
             facilityData["status"] = this.facilityStatus(facility);
+          }
+          if (facility[key].newValue === facility[key].previousValue) {
+            console.log("the same")
+            facilityData[key] = (
+              <span style={{ fontSize: "90%" }}>
+                + {facility[key].newValue || "not available"}
+              </span >
+            );
           } else {
             facilityData[key] = (
               <span style={{ fontSize: "90%" }}>
@@ -132,12 +140,11 @@ export default class Index extends React.Component {
             );
           }
         });
-        console.log(facilityData);
+        data.push(facilityData);
       });
 
       return data;
     }
-    console.log(this.state.synchronizations);
     return this.state.synchronizations;
   };
 
@@ -152,10 +159,10 @@ export default class Index extends React.Component {
     const synchedHeaders =
       this.state.facilities.length > 0
         ? Object.keys(this.state.facilities[0])
-            .filter(header => !unwantedHeaders.includes(header))
-            .map(heading => {
-              return { name: heading, title: heading };
-            })
+          .filter(header => !unwantedHeaders.includes(header))
+          .map(heading => {
+            return { name: heading, title: heading };
+          })
         : [];
     if (this.state.facilities.length > 0) {
       synchedHeaders.push({

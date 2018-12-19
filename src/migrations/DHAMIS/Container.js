@@ -33,9 +33,6 @@ class Container extends Component {
   }
 
   _toggleMigratingStatus = async (isMigrating) => {
-    // await this.firestore.collection('dhamis').doc('migrating').set({
-    //   state: true
-    // });
     this.setState({
       isMigrating
     })
@@ -43,6 +40,7 @@ class Container extends Component {
 
   async componentDidMount() {
     this.setState({ isFetchingMigrations: true });
+
     const {
       OPENHIM_URL: URL,
       OPENHIM_PASSWORD: password,
@@ -80,7 +78,6 @@ class Container extends Component {
 
     const migrations = req ? req.data : [];
     await this.setState({ migrations, isFetchingMigrations: false });
-    console.log(this.state.migrations);
   }
 
   async componentWillUnmount() {
@@ -89,21 +86,21 @@ class Container extends Component {
 
   headings = [
     { name: "_id", title: "ID" },
-    { name: "status", title: "Status" },
     { name: "period", title: "Period" },
     { name: "successful_records", title: "Successful Records" },
     { name: "failed_records", title: "Failed Records" },
     { name: "migration_date", title: "Date" }
   ];
 
-  grid = () => (
+  _grid = () => (
     <Grid
       rows={this.state.migrations}
       columns={this.headings}
+      emptyStateText={this._getEmptyStateText()}
     />
   );
 
-  getEmptyStateText = () =>
+  _getEmptyStateText = () =>
     this.state.isFetchingMigrations ? "Fetching Migrations..." : "No Data";
 
   loader = () => {
@@ -118,7 +115,7 @@ class Container extends Component {
           <Form handleClick={this.clickHandler} toggleMigratingStatus={this._toggleMigratingStatus} />
           {this.loader()}
           {this.state.isMigrating && this._renderMigratingView()}
-          {this.grid()}
+          {this._grid()}
         </Wrapper>
       </div>
     )
